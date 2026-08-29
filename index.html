@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MasterScore AI - Master Edition</title>
+    <!-- Lien vers le manifest PWA -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Icône de l'application -->
+    <link rel="icon" href="icon21.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon21.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2canvas pour le ticket VIP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+        
+        :root {
+            --theme-p: #06b6d4; 
+            --theme-s: #7c3aed; 
+            --theme-glow: rgba(6, 182, 212, 0.4);
+        }
+
+        body { font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { display: none; }
+        
+        @keyframes float {
+            0% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+            100% { transform: translateY(0px) scale(1); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        .bottom-sheet { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+        .bottom-sheet.open { transform: translateY(0); }
+        
+        .team-logo { width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+        .team-logo-lg { width: 55px; height: 55px; object-fit: contain; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.5)); }
+        .league-logo { width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+        
+        button:active, .prono-btn:active { transform: scale(0.95); transition: transform 0.1s; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        
+        .text-theme { color: var(--theme-p); }
+        .bg-theme { background-color: var(--theme-p); }
+        .border-theme { border-color: var(--theme-p); }
+        .gradient-theme { background: linear-gradient(to right, var(--theme-p), var(--theme-s)); }
+        .shadow-theme { box-shadow: 0 0 20px var(--theme-glow); }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-200 min-h-screen relative overflow-x-hidden selection:bg-cyan-500/30 pb-20">
+
+    <div id="bg-orbe-1" class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[100px] animate-float pointer-events-none z-0 opacity-20" style="background-color: var(--theme-p);"></div>
+    <div id="bg-orbe-2" class="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[100px] animate-float pointer-events-none z-0 opacity-20" style="animation-delay: -3s; background-color: var(--theme-s);"></div>
+
+    <div id="toast" class="fixed top-4 left-4 right-4 bg-emerald-500 text-slate-950 font-bold px-4 py-3 rounded-2xl shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-[100] flex items-center justify-center gap-2 translate-y-[-20px]">
+        <span id="toast-msg">✨ Action effectuée !</span>
+    </div>
+
+    <!-- ================= ÉCRAN 1 : LIGUES ================= -->
+    <div id="view-selection" class="relative z-10 min-h-screen flex flex-col p-4 pt-8 transition-opacity duration-500 pb-24">
+        <div class="flex justify-center mb-6">
+            <div class="w-20 h-20 rounded-3xl p-2 bg-[#111827] border border-white/10 shadow-[0_0_30px_rgba(6,182,212,0.3)] flex items-center justify-center animate-float overflow-hidden">
+                <img src="icon21.png" alt="Logo" class="w-full h-full object-cover rounded-2xl">
+            </div>
+        </div>
+
+        <div class="mb-6 text-center">
+            <h1 class="text-3xl font-black tracking-tight leading-tight">
+                <span class="gradient-to-r text-transparent bg-clip-text gradient-theme">MasterScore AI</span>
+            </h1>
+            <p class="text-slate-400 font-medium text-sm mt-1">Intelligence Prédictive & Analyses Sportives</p>
+        </div>
+
+        <div class="flex flex-col gap-3 w-full">
+            <button onclick="ouvrirDashboard('PL', 'Premier League')" class="bg-[#111827]/80 backdrop-blur-md border border-white/10 p-4 rounded-3xl flex items-center gap-4 hover:bg-white/5 active:bg-white/10">
+                <div class="bg-white/10 p-2 rounded-2xl"><img src="https://crests.football-data.org/PL.png" class="league-logo" alt="PL" onerror="this.src='https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg'"></div>
+                <div class="text-left"><h3 class="text-lg font-bold text-white">Premier League</h3><p class="text-xs text-slate-500">Angleterre</p></div>
+                <div class="ml-auto text-slate-600">❯</div>
+            </button>
+            <button onclick="ouvrirDashboard('PD', 'La Liga')" class="bg-[#111827]/80 backdrop-blur-md border border-white/10 p-4 rounded-3xl flex items-center gap-4 hover:bg-white/5 active:bg-white/10">
+                <div class="bg-white/10 p-2 rounded-2xl"><img src="https://crests.football-data.org/PD.png" class="league-logo" alt="LL" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/0/0f/LaLiga_logo_2023.svg'"></div>
+                <div class="text-left"><h3 class="text-lg font-bold text-white">La Liga</h3><p class="text-xs text-slate-500">Espagne</p></div>
+                <div class="ml-auto text-slate-600">❯</div>
+            </button>
+            <button onclick="ouvrirDashboard('SA', 'Serie A')" class="bg-[#111827]/80 backdrop-blur-md border border-white/10 p-4 rounded-3xl flex items-center gap-4 hover:bg-white/5 active:bg-white/10">
+                <div class="bg-white/10 p-2 rounded-2xl"><img src="https://crests.football-data.org/SA.png" class="league-logo" alt="SA" onerror="this.src='https://cdn-icons-png.flaticon.com/512/808/808476.png'"></div>
+                <div class="text-left"><h3 class="text-lg font-bold text-white">Serie A</h3><p class="text-xs text-slate-500">Italie</p></div>
+                <div class="ml-auto text-slate-600">❯</div>
+            </button>
+            <button onclick="ouvrirDashboard('BL1', 'Bundesliga')" class="bg-[#111827]/80 backdrop-blur-md border border-white/10 p-4 rounded-3xl flex items-center gap-4 hover:bg-white/5 active:bg-white/10">
+                <div class="bg-white/10 p-2 rounded-2xl"><img src="https://crests.football-data.org/BL1.png" class="league-logo" alt="BL" onerror="this.src='https://upload.wikimedia.org/wikipedia/en/d/df/Bundesliga_logo_%282017%29.svg'"></div>
+                <div class="text-left"><h3 class="text-lg font-bold text-white">Bundesliga</h3><p class="text-xs text-slate-500">Allemagne</p></div>
+                <div class="ml-auto text-slate-600">❯</div>
+            </button>
+            <button onclick="ouvrirDashboard('FL1', 'Ligue 1')" class="bg-[#111827]/80 backdrop-blur-md border border-white/10 p-4 rounded-3xl flex items-center gap-4 hover:bg-white/5 active:bg-white/10">
+                <div class="bg-white/10 p-2 rounded-2xl"><img src="https://crests.football-data.org/FL1.png" class="league-logo" alt="L1" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/5/5e/Ligue1.svg'"></div>
+                <div class="text-left"><h3 class="text-lg font-bold text-white">Ligue 1</h3><p class="text-xs text-slate-500">France</p></div>
+                <div class="ml-auto text-slate-600">❯</div>
+            </button>
+        </div>
+
+        <div class="mt-auto pt-10 pb-4 text-center w-full">
+            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">© 2026 MasterScore AI</p>
+            <p class="text-[11px] text-slate-400 font-medium mt-1">Développé par <span class="text-theme font-black">Saber Aballagh</span> 🇲🇦</p>
+        </div>
+    </div>
+
+    <!-- ================= ÉCRAN 2 : LISTE DES MATCHS ================= -->
+    <div id="view-dashboard" class="hidden relative z-10 min-h-screen pb-24 flex flex-col">
+        <header class="sticky top-0 z-40 bg-[#0b1120]/90 backdrop-blur-xl border-b border-white/5 p-4 flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+                <button onclick="naviguerVers('view-selection')" class="bg-white/5 p-2 rounded-full border border-white/10 active:bg-white/10">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h2 id="titre-championnat" class="text-lg font-black text-white truncate">Championnat</h2>
+            </div>
+            <div class="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                <button onclick="filtrerTri('chrono')" id="btn-tri-chrono" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-theme border-theme border bg-white/5">🕒 Heure</button>
+                <button onclick="filtrerTri('confiance')" id="btn-tri-conf" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400">🎯 Sûrs</button>
+            </div>
+        </header>
+        <main class="flex-1 p-4 space-y-3" id="predictions-container"></main>
+        
+        <div class="mt-8 mb-4 text-center w-full">
+            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">© 2026 MasterScore AI</p>
+            <p class="text-[11px] text-slate-400 font-medium mt-1">Développé par <span class="text-theme font-black">Saber Aballagh</span> 🇲🇦</p>
+        </div>
+    </div>
+
+    <!-- ================= ÉCRAN 3 : OUTILS PRO ================= -->
+    <div id="view-outils" class="hidden relative z-10 min-h-screen pb-24 flex flex-col p-4 pt-10">
+        <div class="mb-6">
+            <h2 class="text-2xl font-black text-white">⚙️ Outils Pro</h2>
+            <p class="text-slate-400 text-xs">Personnalisation & Gestion de Bankroll</p>
+        </div>
+
+        <div class="bg-[#111827] border border-white/5 rounded-3xl p-5 mb-6 shadow-lg">
+            <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">🎨 Thème de l'Application</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="changerTheme('cyber')" class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-white/10">
+                    <div class="w-full h-2 rounded-full bg-gradient-to-r from-[#06b6d4] to-[#7c3aed]"></div>
+                    <span class="text-[10px] font-bold text-white">Cyberpunk</span>
+                </button>
+                <button onclick="changerTheme('madrid')" class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-white/10">
+                    <div class="w-full h-2 rounded-full bg-gradient-to-r from-[#fbbf24] to-[#cbd5e1]"></div>
+                    <span class="text-[10px] font-bold text-white">Or & Blanc</span>
+                </button>
+                <button onclick="changerTheme('arsenal')" class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-white/10">
+                    <div class="w-full h-2 rounded-full bg-gradient-to-r from-[#ef4444] to-[#fca5a5]"></div>
+                    <span class="text-[10px] font-bold text-white">Rouge Choc</span>
+                </button>
+                <button onclick="changerTheme('cash')" class="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center gap-2 hover:bg-white/10">
+                    <div class="w-full h-2 rounded-full bg-gradient-to-r from-[#10b981] to-[#14b8a6]"></div>
+                    <span class="text-[10px] font-bold text-white">Green Cash</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-[#111827] border border-white/5 rounded-3xl p-5 shadow-lg">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">🎯 Challenge Montante</h3>
+                <button onclick="reinitialiserMontante()" class="text-[10px] bg-red-500/10 text-red-400 px-2 py-1 rounded border border-red-500/20">Reset</button>
+            </div>
+            
+            <div class="flex justify-between items-center bg-[#0b1120] p-4 rounded-2xl border border-white/5 mb-4">
+                <div>
+                    <div class="text-[10px] text-slate-500 uppercase font-bold">Capital Actuel</div>
+                    <div class="text-2xl font-black text-emerald-400" id="montante-capital">10.00 €</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] text-slate-500 uppercase font-bold">Palier Actuel</div>
+                    <div class="text-xl font-bold text-white">#<span id="montante-palier">1</span></div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <input type="number" id="montante-cote" placeholder="Cote gagnée (ex: 1.50)" class="bg-[#0b1120] border border-white/10 rounded-xl px-4 py-3 text-sm text-white w-full focus:outline-none focus:border-emerald-500">
+                    <button onclick="validerPalier()" class="bg-emerald-600 text-white font-bold px-4 py-3 rounded-xl shadow-lg">Valider</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-10 pb-4 text-center w-full">
+            <p class="text-[10px] text-slate-600 font-bold uppercase tracking-widest">© 2026 MasterScore AI</p>
+            <p class="text-[11px] text-slate-400 font-medium mt-1">Développé par <span class="text-theme font-black">Saber Aballagh</span> 🇲🇦</p>
+        </div>
+    </div>
+
+    <!-- ================= NAV BAR MOBILE ================= -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-[#0b1120]/95 backdrop-blur-xl border-t border-white/10 z-50 pb-safe">
+        <div class="flex justify-around items-center h-16 relative">
+            <button onclick="naviguerVers('view-selection')" class="flex flex-col items-center gap-1 p-2 w-full text-slate-400 hover:text-white" id="nav-ligues">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span class="text-[10px] font-bold">Ligues</span>
+            </button>
+            
+            <div class="relative w-full flex justify-center -mt-6">
+                <button onclick="toggleModalTicket()" class="flex items-center justify-center w-14 h-14 rounded-full gradient-theme shadow-theme border-4 border-[#0b1120] relative text-slate-950 transition-transform active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <span id="ticket-badge" class="absolute 0 -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#0b1120] hidden">0</span>
+                </button>
+            </div>
+
+            <button onclick="naviguerVers('view-outils')" class="flex flex-col items-center gap-1 p-2 w-full text-slate-400 hover:text-white" id="nav-outils">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-[10px] font-bold">Outils</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================= BOTTOM SHEET DÉTAILS ================= -->
+    <div id="overlay-match" onclick="fermerModalMatch()" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[60] hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="bottom-sheet-match" class="bottom-sheet fixed inset-x-0 bottom-0 bg-[#111827] border-t border-theme rounded-t-3xl z-[70] flex flex-col max-h-[90vh]">
+        <div class="w-full flex justify-center py-3" onclick="fermerModalMatch()"><div class="w-12 h-1.5 bg-white/20 rounded-full"></div></div>
+        <div id="modal-match-content" class="overflow-y-auto px-4 pb-20 custom-scrollbar"></div>
+    </div>
+
+    <!-- ================= MODAL TICKET & EXPORT ================= -->
+    <div id="modal-ticket" class="fixed inset-0 bg-[#0b1120] z-[80] hidden flex flex-col transition-transform duration-300 translate-y-full">
+        <div class="flex justify-between items-center p-4 border-b border-white/5 bg-[#111827]">
+            <h3 class="text-lg font-black text-white">🎟️ Mon Combiné</h3>
+            <button onclick="toggleModalTicket()" class="bg-white/5 p-2 rounded-full text-slate-400">✕</button>
+        </div>
+        
+        <div id="ticket-export-area" class="flex-1 overflow-y-auto p-4 space-y-3 bg-[#0b1120]">
+            <div class="text-center mb-4 hidden" id="vip-watermark">
+                <h2 class="text-2xl font-black gradient-to-r text-transparent bg-clip-text gradient-theme">MasterScore VIP</h2>
+                <p class="text-[10px] text-slate-500 uppercase tracking-widest">Algorithme d'Analyse Prédictive</p>
+            </div>
+            <div id="ticket-items" class="space-y-3"></div>
+            <div class="mt-4 border-t border-white/10 pt-4 hidden" id="vip-summary">
+                <div class="flex justify-between items-center bg-[#111827] p-4 rounded-2xl">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Cote Globale</span>
+                    <span class="text-2xl font-black text-theme" id="vip-cote">1.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-[#111827] border-t border-white/5 p-4 pb-safe space-y-4 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+            <div class="flex justify-between items-center bg-[#0b1120] p-3 rounded-2xl border border-white/5">
+                <span class="text-xs font-bold text-slate-400">Mise (€)</span>
+                <input type="number" id="input-mise" value="10" min="1" oninput="rafraichirModalTicket()" class="bg-transparent text-right text-white font-black text-lg focus:outline-none w-20">
+            </div>
+            <div class="flex justify-between items-end px-1 mb-2">
+                <div><div class="text-[10px] text-slate-500 uppercase font-bold">Cote Totale</div><div id="ticket-cote" class="text-xl font-black text-theme">1.00</div></div>
+                <div class="text-right"><div class="text-[10px] text-slate-500 uppercase font-bold">Gains</div><div id="ticket-gains" class="text-2xl font-black text-emerald-400">0.00 €</div></div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="viderTicket()" class="bg-red-500/10 text-red-400 px-4 py-3 rounded-2xl font-bold text-sm">Vider</button>
+                <button onclick="partagerTicketWhatsapp()" class="bg-emerald-600 text-white font-black py-3 px-4 rounded-2xl flex items-center justify-center">📲</button>
+                <button onclick="exporterTicketImage()" class="flex-1 gradient-theme text-slate-950 font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-theme">
+                    📸 Exporter Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chargement du fichier externe app.js -->
+    <script src="app.js"></script>
+</body>
+</html>
